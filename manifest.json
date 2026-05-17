@@ -1,14 +1,23 @@
 {
+  "id": "/meal-randomizer-pwa/",
   "name": "오늘 뭐 먹지?",
   "short_name": "오늘뭐먹지",
-  "start_url": "index.html",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#111827",
   "theme_color": "#f7b733",
   "orientation": "portrait",
+  "description": "냉동실 재고 기준으로 오늘 먹을 메뉴를 랜덤 추천합니다.",
   "icons": [
     {
-      "src": "icon.png",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
