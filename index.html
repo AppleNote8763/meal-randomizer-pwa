@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111827" />
+  <title>자취 식단 선택기</title>
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    :root {
+      --bg: #f4f6f8;
+      --card: #ffffff;
+      --card2: #f9fafb;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --primary: #111827;
+      --primaryText: #ffffff;
+      --danger: #b91c1c;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --card2: #1f2937;
+        --text: #f9fafb;
+        --muted: #d1d5db;
+        --border: #374151;
+        --primary: #f9fafb;
+        --primaryText: #111827;
+        --danger: #fca5a5;
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 16px 14px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 16px;
+      padding-bottom: 80px;
+    }
+
+    section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.06);
+    }
+
+    h2 {
+      font-size: 18px;
+      margin: 0 0 12px;
+    }
+
+    h3 {
+      font-size: 15px;
+      margin: 16px 0 8px;
+    }
+
+    .small {
+      font-size: 13px;
+      color: var(--muted);
+      margin: 0;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .tab {
+      border: 1px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      border-radius: 14px;
+      padding: 14px 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      color: var(--primaryText);
+      border-color: var(--primary);
+    }
+
+    .inventory-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+      font-size: 15px;
+    }
+
+    .check-item input {
+      width: 20px;
+      height: 20px;
+    }
+
+    .button-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 13px;
+      padding: 13px 10px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      background: var(--primary);
+      color: var(--primaryText);
+    }
+
+    button.secondary {
+      background: var(--card2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .result {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      margin-top: 14px;
+    }
+
+    .result-title {
+      font-size: 22px;
+      font-weight: 900;
+      margin-bottom: 8px;
+      word-break: keep-all;
+    }
+
+    .result-sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: var(--card2);
+      color: var(--text);
+      border-radius: 13px;
+      padding: 13px;
+      font-size: 15px;
+    }
+
+    .category-checks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .category-checks label {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 13px;
+      padding: 11px 6px;
+      font-size: 14px;
+    }
+
+    .category-checks input {
+      width: 17px;
+      height: 17px;
+    }
+
+    .stock-table {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .stock-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .stock-name {
+      font-weight: 700;
+    }
+
+    .stock-cats {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 3px;
+    }
+
+    .delete-btn {
+      background: transparent;
+      color: var(--danger);
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
+    .sort-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .empty {
+      color: var(--muted);
+      background: var(--card2);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 14px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+      margin-top: 18px;
+    }
+
+    @media (min-width: 640px) {
+      .inventory-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>자취 식단 선택기</h1>
+    <p>냉동실 재고 기준으로 오늘 먹을 메뉴를 랜덤 추천합니다.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>1. 카테고리 선택</h2>
+      <div class="tabs">
+        <button class="tab active" data-category="밥">밥</button>
+        <button class="tab" data-category="라면">라면</button>
+        <button class="tab" data-category="간식">간식</button>
+      </div>
+
+      <h3>2. 현재 재고 체크</h3>
+      <div id="inventoryChecklist" class="inventory-list"></div>
+
+      <div class="button-row">
+        <button onclick="recommendMeal()">랜덤 추천</button>
+        <button class="secondary" onclick="checkAll()">전부 체크</button>
+        <button class="secondary" onclick="clearChecks()">체크 해제</button>
+      </div>
+
+      <div class="result">
+        <div id="resultTitle" class="result-title">아직 추천 전입니다.</div>
+        <div id="resultSub" class="result-sub">카테고리 선택 후 현재 있는 재고를 체크해주세요.</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>재고 추가</h2>
+      <div class="form-grid">
+        <input id="itemName" type="text" placeholder="예: 냉동 새우튀김" />
+        <div class="category-checks">
+          <label><input type="checkbox" value="밥" class="add-category" /> 밥</label>
+          <label><input type="checkbox" value="라면" class="add-category" /> 라면</label>
+          <label><input type="checkbox" value="간식" class="add-category" /> 간식</label>
+        </div>
+        <button onclick="addItem()">재고 추가</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>재고 목록</h2>
+      <p class="small">이름 또는 카테고리 기준으로 정렬할 수 있습니다.</p>
+      <div class="sort-row">
+        <button class="secondary" onclick="sortByName()">이름 정렬</button>
+        <button class="secondary" onclick="sortByCategory()">카테고리 정렬</button>
+      </div>
+      <div id="stockList" class="stock-table"></div>
+    </section>
+
+    <section>
+      <h2>사용 기준</h2>
+      <p class="small">
+        밥은 체크한 반찬이 하나면 그 음식 위주로, 여러 개면 2~3개 조합으로 추천합니다.
+        라면은 최대 2개 재료만 추천합니다. 간식은 하나만 추천합니다.
+      </p>
+    </section>
+
+    <div class="footer-note">데이터는 이 휴대폰 브라우저에만 저장됩니다.</div>
+  </main>
+
+  <script>
+    const DEFAULT_ITEMS = [
+      { name: "냉동만두", categories: ["밥", "라면"] },
+      { name: "큐브 닭가슴살", categories: ["라면"] },
+      { name: "냉동 치킨", categories: ["밥"] },
+      { name: "미니 돈까스", categories: ["밥"] },
+      { name: "치킨너겟", categories: ["밥"] },
+      { name: "비엔나 소시지", categories: ["밥"] },
+      { name: "소시지 가라아게", categories: ["밥"] },
+      { name: "냉동 미니 피자", categories: ["간식"] },
+      { name: "해쉬브라운", categories: ["간식"] },
+      { name: "테이터토츠", categories: ["간식"] },
+      { name: "냉동 대파", categories: ["라면"] },
+      { name: "냉동 간마늘", categories: ["라면"] }
+    ];
+
+    const CATEGORY_ORDER = { "밥": 0, "라면": 1, "간식": 2 };
+    let selectedCategory = "밥";
+    let nameSortAsc = true;
+    let categorySortAsc = true;
+
+    function loadItems() {
+      const saved = localStorage.getItem("mealItems");
+      if (!saved) return [...DEFAULT_ITEMS];
+
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {}
+
+      return [...DEFAULT_ITEMS];
+    }
+
+    let items = loadItems();
+
+    function saveItems() {
+      localStorage.setItem("mealItems", JSON.stringify(items));
+    }
+
+    function normalizeCategories(categories) {
+      return [...new Set(categories)].sort((a, b) => CATEGORY_ORDER[a] - CATEGORY_ORDER[b]);
+    }
+
+    function renderTabs() {
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.category === selectedCategory);
+      });
+    }
+
+    function renderChecklist() {
+      const box = document.getElementById("inventoryChecklist");
+      box.innerHTML = "";
+
+      const filtered = items
+        .filter(item => item.categories.includes(selectedCategory))
+        .sort((a, b) => a.name.localeCompare(b.name, "ko"));
+
+      if (filtered.length === 0) {
+        box.innerHTML = `<div class="empty">이 카테고리에 등록된 재고가 없습니다.</div>`;
+        return;
+      }
+
+      filtered.forEach(item => {
+        const id = `check-${item.name}`;
+        const label = document.createElement("label");
+        label.className = "check-item";
+        label.innerHTML = `
+          <input type="checkbox" value="${escapeHtml(item.name)}" />
+          <span>${escapeHtml(item.name)}</span>
+        `;
+        box.appendChild(label);
+      });
+    }
+
+    function renderStockList() {
+      const box = document.getElementById("stockList");
+      box.innerHTML = "";
+
+      if (items.length === 0) {
+        box.innerHTML = `<div class="empty">등록된 재고 종류가 없습니다.</div>`;
+        return;
+      }
+
+      items.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "stock-row";
+        row.innerHTML = `
+          <div>
+            <div class="stock-name">${escapeHtml(item.name)}</div>
+            <div class="stock-cats">${escapeHtml(item.categories.join(", "))}</div>
+          </div>
+          <button class="delete-btn" onclick="deleteItem(${index})">삭제</button>
+        `;
+        box.appendChild(row);
+      });
+    }
+
+    function refresh() {
+      renderTabs();
+      renderChecklist();
+      renderStockList();
+    }
+
+    document.querySelectorAll(".tab").forEach(btn => {
+      btn.addEventListener("click", () => {
+        selectedCategory = btn.dataset.category;
+        document.getElementById("resultTitle").textContent = `${selectedCategory} 선택됨`;
+        document.getElementById("resultSub").textContent = "현재 재고를 체크하고 랜덤 추천을 눌러주세요.";
+        refresh();
+      });
+    });
+
+    function getCheckedNames() {
+      return Array.from(document.querySelectorAll("#inventoryChecklist input:checked"))
+        .map(input => input.value);
+    }
+
+    function recommendMeal() {
+      const checked = getCheckedNames();
+
+      if (checked.length === 0) {
+        document.getElementById("resultTitle").textContent = "체크된 재고가 없습니다.";
+        document.getElementById("resultSub").textContent = `${selectedCategory} 카테고리에서 먹을 재고를 체크해주세요.`;
+        return;
+      }
+
+      if (selectedCategory === "밥") {
+        if (checked.length === 1) {
+          document.getElementById("resultTitle").textContent = `밥 1공기 + ${checked[0]} 위주`;
+          document.getElementById("resultSub").textContent = "한 가지 반찬을 메인으로 먹는 조합입니다.";
+          return;
+        }
+
+        const shuffled = shuffle(checked);
+        const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
+        const selected = shuffled.slice(0, count);
+        document.getElementById("resultTitle").textContent = `밥 1공기 + ${selected.join(" + ")} 조합`;
+        document.getElementById("resultSub").textContent = "에어프라이어에 같이 돌려 여러 반찬을 조금씩 먹는 조합입니다.";
+        return;
+      }
+
+      if (selectedCategory === "라면") {
+        const selected = shuffle(checked).slice(0, Math.min(checked.length, 2));
+        document.getElementById("resultTitle").textContent = `라면 1개 + ${selected.join(" + ")}`;
+        document.getElementById("resultSub").textContent = "라면은 재료를 너무 복잡하게 넣지 않는 기준입니다.";
+        return;
+      }
+
+      if (selectedCategory === "간식") {
+        const selected = checked[Math.floor(Math.random() * checked.length)];
+        document.getElementById("resultTitle").textContent = selected;
+        document.getElementById("resultSub").textContent = "외식이나 배달이 당길 때 대체용으로 먹기 좋습니다.";
+      }
+    }
+
+    function checkAll() {
+      document.querySelectorAll("#inventoryChecklist input").forEach(input => input.checked = true);
+      document.getElementById("resultTitle").textContent = "전부 체크했습니다.";
+      document.getElementById("resultSub").textContent = `${selectedCategory} 카테고리 재고가 모두 선택되었습니다.`;
+    }
+
+    function clearChecks() {
+      document.querySelectorAll("#inventoryChecklist input").forEach(input => input.checked = false);
+      document.getElementById("resultTitle").textContent = "체크를 해제했습니다.";
+      document.getElementById("resultSub").textContent = "다시 현재 재고를 체크해주세요.";
+    }
+
+    function addItem() {
+      const nameInput = document.getElementById("itemName");
+      const name = nameInput.value.trim();
+      const categories = Array.from(document.querySelectorAll(".add-category:checked")).map(input => input.value);
+
+      if (!name) {
+        alert("재고 이름을 입력해주세요.");
+        return;
+      }
+
+      if (categories.length === 0) {
+        alert("카테고리를 1개 이상 선택해주세요.");
+        return;
+      }
+
+      const normalized = normalizeCategories(categories);
+      const existing = items.find(item => item.name === name);
+
+      if (existing) {
+        existing.categories = normalizeCategories([...existing.categories, ...normalized]);
+      } else {
+        items.push({ name, categories: normalized });
+      }
+
+      saveItems();
+      nameInput.value = "";
+      document.querySelectorAll(".add-category").forEach(input => input.checked = false);
+
+      document.getElementById("resultTitle").textContent = `${name} 추가 완료`;
+      document.getElementById("resultSub").textContent = "재고 목록에 반영되었습니다.";
+      refresh();
+    }
+
+    function deleteItem(index) {
+      const target = items[index];
+      if (!target) return;
+
+      const ok = confirm(`${target.name} 항목을 삭제할까요?`);
+      if (!ok) return;
+
+      items.splice(index, 1);
+      saveItems();
+      refresh();
+    }
+
+    function sortByName() {
+      items.sort((a, b) => {
+        const result = a.name.localeCompare(b.name, "ko");
+        return nameSortAsc ? result : -result;
+      });
+      nameSortAsc = !nameSortAsc;
+      saveItems();
+      renderStockList();
+    }
+
+    function sortByCategory() {
+      items.sort((a, b) => {
+        const aOrder = Math.min(...a.categories.map(cat => CATEGORY_ORDER[cat]));
+        const bOrder = Math.min(...b.categories.map(cat => CATEGORY_ORDER[cat]));
+        const result = aOrder - bOrder || a.name.localeCompare(b.name, "ko");
+        return categorySortAsc ? result : -result;
+      });
+      categorySortAsc = !categorySortAsc;
+      saveItems();
+      renderStockList();
+    }
+
+    function shuffle(array) {
+      return [...array].sort(() => Math.random() - 0.5);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+
+    refresh();
+  </script>
+</body>
+</html>
