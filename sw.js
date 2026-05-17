@@ -1,9 +1,9 @@
-const CACHE_NAME = "today-meal-randomizer-v2";
+const CACHE_NAME = "today-meal-randomizer-icon8-v3";
 const FILES = [
   "./",
   "./index.html",
   "./manifest.json",
-  "./icon.svg"
+  "./icon.png"
 ];
 
 self.addEventListener("install", event => {
