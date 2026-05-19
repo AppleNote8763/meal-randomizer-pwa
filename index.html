@@ -192,12 +192,38 @@
       font-size: 13px;
     }
 
+    .cook-info {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .cook-info-title {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .cook-info ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .cook-info li {
+      margin-bottom: 4px;
+    }
+
     .form-grid {
       display: grid;
       gap: 10px;
     }
 
-    input[type="text"] {
+    input[type="text"],
+    input[type="date"],
+    textarea {
       width: 100%;
       border: 1px solid var(--border);
       background: var(--card2);
@@ -205,6 +231,12 @@
       border-radius: 13px;
       padding: 13px;
       font-size: 15px;
+      font-family: inherit;
+    }
+
+    textarea {
+      min-height: 78px;
+      resize: vertical;
     }
 
     .category-checks {
@@ -252,10 +284,18 @@
       font-weight: 700;
     }
 
-    .stock-cats {
+    .stock-cats,
+    .stock-meta {
       color: var(--muted);
       font-size: 13px;
       margin-top: 3px;
+    }
+
+    .stock-memo {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 5px;
+      word-break: keep-all;
     }
 
     .delete-btn {
@@ -323,6 +363,10 @@
       <div class="result">
         <div id="resultTitle" class="result-title">아직 추천 전입니다.</div>
         <div id="resultSub" class="result-sub">카테고리 선택 후 현재 있는 재고를 체크해주세요.</div>
+        <div id="cookInfo" class="cook-info">
+          <div class="cook-info-title">조리 시간 참고</div>
+          <ul id="cookInfoList"></ul>
+        </div>
       </div>
     </section>
 
@@ -335,6 +379,9 @@
           <label><input type="checkbox" value="라면" class="add-category" /> 라면</label>
           <label><input type="checkbox" value="간식" class="add-category" /> 간식</label>
         </div>
+        <input id="cookTime" type="text" placeholder="조리 시간 예: 에어프라이어 12분 / 끓이기 10분" />
+        <input id="expiryDate" type="date" />
+        <textarea id="itemMemo" placeholder="메모 예: 180도 기준, 라면 넣기 전에 먼저 끓이기"></textarea>
         <button onclick="addItem()">재고 추가</button>
       </div>
     </section>
@@ -354,6 +401,7 @@
       <p class="small">
         밥은 체크한 반찬이 하나면 그 음식 위주로, 여러 개면 2~3개 조합으로 추천합니다.
         라면은 최대 2개 재료만 추천합니다. 간식은 하나만 추천합니다.
+        조리 시간은 추천 결과 아래에 참고용으로만 표시됩니다.
       </p>
     </section>
 
@@ -362,18 +410,18 @@
 
   <script>
     const DEFAULT_ITEMS = [
-      { name: "냉동만두", categories: ["밥", "라면"] },
-      { name: "큐브 닭가슴살", categories: ["라면"] },
-      { name: "냉동 치킨", categories: ["밥"] },
-      { name: "미니 돈까스", categories: ["밥"] },
-      { name: "치킨너겟", categories: ["밥"] },
-      { name: "비엔나 소시지", categories: ["밥"] },
-      { name: "소시지 가라아게", categories: ["밥"] },
-      { name: "냉동 미니 피자", categories: ["간식"] },
-      { name: "해쉬브라운", categories: ["간식"] },
-      { name: "테이터토츠", categories: ["간식"] },
-      { name: "냉동 대파", categories: ["라면"] },
-      { name: "냉동 간마늘", categories: ["라면"] }
+      { name: "냉동만두", categories: ["밥", "라면"], cookTime: "", expiryDate: "", memo: "" },
+      { name: "큐브 닭가슴살", categories: ["라면"], cookTime: "끓이기 10분", expiryDate: "", memo: "라면보다 먼저 넣기" },
+      { name: "냉동 치킨", categories: ["밥"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "미니 돈까스", categories: ["밥"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "치킨너겟", categories: ["밥"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "비엔나 소시지", categories: ["밥"], cookTime: "", expiryDate: "", memo: "" },
+      { name: "소시지 가라아게", categories: ["밥"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "냉동 미니 피자", categories: ["간식"], cookTime: "", expiryDate: "", memo: "" },
+      { name: "해쉬브라운", categories: ["간식"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "테이터토츠", categories: ["간식"], cookTime: "에어프라이어 기준 확인", expiryDate: "", memo: "" },
+      { name: "냉동 대파", categories: ["라면"], cookTime: "", expiryDate: "", memo: "" },
+      { name: "냉동 간마늘", categories: ["라면"], cookTime: "", expiryDate: "", memo: "" }
     ];
 
     const CATEGORY_ORDER = { "밥": 0, "라면": 1, "간식": 2 };
@@ -381,13 +429,27 @@
     let nameSortAsc = true;
     let categorySortAsc = true;
 
+    function normalizeItem(item) {
+      return {
+        name: item.name || "",
+        categories: Array.isArray(item.categories) ? item.categories : [],
+        cookTime: item.cookTime || "",
+        expiryDate: item.expiryDate || "",
+        memo: item.memo || ""
+      };
+    }
+
     function loadItems() {
       const saved = localStorage.getItem("mealItems");
       if (!saved) return [...DEFAULT_ITEMS];
+
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed)) {
+          return parsed.map(normalizeItem).filter(item => item.name && item.categories.length > 0);
+        }
       } catch (e) {}
+
       return [...DEFAULT_ITEMS];
     }
 
@@ -441,12 +503,18 @@
       }
 
       items.forEach((item, index) => {
+        const metaParts = [];
+        if (item.cookTime) metaParts.push(`조리 시간: ${item.cookTime}`);
+        if (item.expiryDate) metaParts.push(`유통기한: ${item.expiryDate}`);
+
         const row = document.createElement("div");
         row.className = "stock-row";
         row.innerHTML = `
           <div>
             <div class="stock-name">${escapeHtml(item.name)}</div>
             <div class="stock-cats">${escapeHtml(item.categories.join(", "))}</div>
+            ${metaParts.length ? `<div class="stock-meta">${escapeHtml(metaParts.join(" · "))}</div>` : ""}
+            ${item.memo ? `<div class="stock-memo">메모: ${escapeHtml(item.memo)}</div>` : ""}
           </div>
           <button class="delete-btn" onclick="deleteItem(${index})">삭제</button>
         `;
@@ -465,6 +533,7 @@
         selectedCategory = btn.dataset.category;
         document.getElementById("resultTitle").textContent = `${selectedCategory} 선택됨`;
         document.getElementById("resultSub").textContent = "현재 재고를 체크하고 랜덤 추천을 눌러주세요.";
+        hideCookInfo();
         refresh();
       });
     });
@@ -474,60 +543,116 @@
         .map(input => input.value);
     }
 
+    function getItemsByNames(names) {
+      return names
+        .map(name => items.find(item => item.name === name))
+        .filter(Boolean);
+    }
+
     function recommendMeal() {
       const checked = getCheckedNames();
 
       if (checked.length === 0) {
         document.getElementById("resultTitle").textContent = "체크된 재고가 없습니다.";
         document.getElementById("resultSub").textContent = `${selectedCategory} 카테고리에서 먹을 재고를 체크해주세요.`;
+        hideCookInfo();
         return;
       }
 
+      let selectedNames = [];
+
       if (selectedCategory === "밥") {
         if (checked.length === 1) {
+          selectedNames = [checked[0]];
           document.getElementById("resultTitle").textContent = `밥 1공기 + ${checked[0]} 위주`;
           document.getElementById("resultSub").textContent = "한 가지 반찬을 메인으로 먹는 조합입니다.";
-          return;
+        } else {
+          const shuffled = shuffle(checked);
+          const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
+          selectedNames = shuffled.slice(0, count);
+          document.getElementById("resultTitle").textContent = `밥 1공기 + ${selectedNames.join(" + ")} 조합`;
+          document.getElementById("resultSub").textContent = "에어프라이어에 같이 돌려 여러 반찬을 조금씩 먹는 조합입니다.";
         }
 
-        const shuffled = shuffle(checked);
-        const count = Math.min(shuffled.length, Math.floor(Math.random() * 2) + 2);
-        const selected = shuffled.slice(0, count);
-        document.getElementById("resultTitle").textContent = `밥 1공기 + ${selected.join(" + ")} 조합`;
-        document.getElementById("resultSub").textContent = "에어프라이어에 같이 돌려 여러 반찬을 조금씩 먹는 조합입니다.";
+        showCookInfo(getItemsByNames(selectedNames));
         return;
       }
 
       if (selectedCategory === "라면") {
-        const selected = shuffle(checked).slice(0, Math.min(checked.length, 2));
-        document.getElementById("resultTitle").textContent = `라면 1개 + ${selected.join(" + ")}`;
+        selectedNames = shuffle(checked).slice(0, Math.min(checked.length, 2));
+        document.getElementById("resultTitle").textContent = `라면 1개 + ${selectedNames.join(" + ")}`;
         document.getElementById("resultSub").textContent = "라면은 재료를 너무 복잡하게 넣지 않는 기준입니다.";
+        showCookInfo(getItemsByNames(selectedNames));
         return;
       }
 
       if (selectedCategory === "간식") {
         const selected = checked[Math.floor(Math.random() * checked.length)];
+        selectedNames = [selected];
         document.getElementById("resultTitle").textContent = selected;
         document.getElementById("resultSub").textContent = "외식이나 배달이 당길 때 대체용으로 먹기 좋습니다.";
+        showCookInfo(getItemsByNames(selectedNames));
       }
+    }
+
+    function showCookInfo(selectedItems) {
+      const cookInfo = document.getElementById("cookInfo");
+      const list = document.getElementById("cookInfoList");
+      list.innerHTML = "";
+
+      const rows = selectedItems
+        .filter(item => item.cookTime || item.memo)
+        .map(item => {
+          const detail = [];
+          if (item.cookTime) detail.push(item.cookTime);
+          if (item.memo) detail.push(item.memo);
+          return `${item.name}: ${detail.join(" / ")}`;
+        });
+
+      if (rows.length === 0) {
+        cookInfo.style.display = "none";
+        return;
+      }
+
+      rows.forEach(text => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        list.appendChild(li);
+      });
+
+      cookInfo.style.display = "block";
+    }
+
+    function hideCookInfo() {
+      document.getElementById("cookInfo").style.display = "none";
+      document.getElementById("cookInfoList").innerHTML = "";
     }
 
     function checkAll() {
       document.querySelectorAll("#inventoryChecklist input").forEach(input => input.checked = true);
       document.getElementById("resultTitle").textContent = "전부 체크했습니다.";
       document.getElementById("resultSub").textContent = `${selectedCategory} 카테고리 재고가 모두 선택되었습니다.`;
+      hideCookInfo();
     }
 
     function clearChecks() {
       document.querySelectorAll("#inventoryChecklist input").forEach(input => input.checked = false);
       document.getElementById("resultTitle").textContent = "체크를 해제했습니다.";
       document.getElementById("resultSub").textContent = "다시 현재 재고를 체크해주세요.";
+      hideCookInfo();
     }
 
     function addItem() {
       const nameInput = document.getElementById("itemName");
+      const cookTimeInput = document.getElementById("cookTime");
+      const expiryInput = document.getElementById("expiryDate");
+      const memoInput = document.getElementById("itemMemo");
+
       const name = nameInput.value.trim();
       const categories = Array.from(document.querySelectorAll(".add-category:checked")).map(input => input.value);
+      const cookTime = cookTimeInput.value.trim();
+      const expiryDate = expiryInput.value;
+      const memo = memoInput.value.trim();
 
       if (!name) {
         alert("재고 이름을 입력해주세요.");
@@ -544,16 +669,24 @@
 
       if (existing) {
         existing.categories = normalizeCategories([...existing.categories, ...normalized]);
+        existing.cookTime = cookTime;
+        existing.expiryDate = expiryDate;
+        existing.memo = memo;
       } else {
-        items.push({ name, categories: normalized });
+        items.push({ name, categories: normalized, cookTime, expiryDate, memo });
       }
 
       saveItems();
+
       nameInput.value = "";
+      cookTimeInput.value = "";
+      expiryInput.value = "";
+      memoInput.value = "";
       document.querySelectorAll(".add-category").forEach(input => input.checked = false);
 
       document.getElementById("resultTitle").textContent = `${name} 추가 완료`;
       document.getElementById("resultSub").textContent = "재고 목록에 반영되었습니다.";
+      hideCookInfo();
       refresh();
     }
 

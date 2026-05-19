@@ -1,4 +1,4 @@
-const CACHE_NAME = "today-meal-randomizer-install-fix-v4";
+const CACHE_NAME = "today-meal-randomizer-cooking-update-v6";
 const FILES = [
   "./",
   "./index.html",
